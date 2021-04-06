@@ -14,26 +14,34 @@ class SfdcMetadataApi:
     }
 
     def __init__(self, session):
+        print("ℹ️ IS CONNECTED? ", session.is_connected())
         if not session.is_connected():
             raise Exception("Session must be connected prior to instantiating this class")
         self._session = session
         self._deploy_zip = None
 
     def _get_api_url(self):
+        print("ℹ️ ss.metadata._get_api_url")
+        print(self._session.get_server_url())
+        print(self._METADATA_API_BASE_URI.format(**{'version': self._session.get_api_version()}))
         return "%s%s" % (
             self._session.get_server_url(),
             self._METADATA_API_BASE_URI.format(**{'version': self._session.get_api_version()}))
 
     def deploy(self, zipfile, options):
         """ Kicks off async deployment, returns deployment id """
+        print("ℹ️ℹ️ℹ️ ss.metadata.deploy")
+        print(zipfile)
+        print(options)
         check_only = ""
+        print("checkonly")
         if 'checkonly' in options:
             check_only = "<met:checkOnly>%s</met:checkOnly>" % options['checkonly']
-
+        print("test_level")
         test_level = ""
         if 'testlevel' in options:
             test_level = "<met:testLevel>%s</met:testLevel>" % options['testlevel']
-
+        print("tests tag")
         tests_tag = ""
         if 'tests' in options:
             for test in options['tests']:
@@ -47,23 +55,29 @@ class SfdcMetadataApi:
             'testLevel': test_level,
             'tests': tests_tag
         }
-
+        print("ℹ️ℹ️ ss.metadata.deploy about to send it")
         request = msg.DEPLOY_MSG.format(**attributes)
 
         headers = {'Content-type': 'text/xml', 'SOAPAction': 'deploy'}
+
         res = self._session.post(self._get_api_url(), headers=headers, data=request)
+
         if res.status_code != 200:
             raise Exception(
                 "Request failed with %d code and error [%s]" %
                 (res.status_code, res.text))
-
+        print("xml namespaces")
+        print(self._XML_NAMESPACES)
         async_process_id = ET.fromstring(res.text).find(
             'soapenv:Body/mt:deployResponse/mt:result/mt:id',
             self._XML_NAMESPACES).text
+        print("DID WE GET IT")
+        print(async_process_id)
         state = ET.fromstring(res.text).find(
             'soapenv:Body/mt:deployResponse/mt:result/mt:state',
             self._XML_NAMESPACES).text
-
+        print("did we get it")
+        print(state)
         return async_process_id, state
 
     @staticmethod

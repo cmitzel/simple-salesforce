@@ -94,10 +94,12 @@ class Salesforce:
                      exposed by simple_salesforce.
 
         """
-
+        print("ss.api.INIT -----------------------------------------")
         if domain is None:
             domain = 'login'
-
+        print(domain)
+        print("instance_url: ", instance_url)
+        print("instance: ", instance)
         # Determine if the user passed in the optional version and/or
         # domain kwargs
         self.sf_version = version
@@ -184,13 +186,14 @@ class Salesforce:
             'Authorization': 'Bearer ' + self.session_id,
             'X-PrettyPrint': '1'
         }
-
-        self.base_url = ('https://{instance}/services/data/v{version}/'
+        # self.sf_instance = "localhost:80"
+        self.base_url = ('http://{instance}/services/data/v{version}/'
                          .format(instance=self.sf_instance,
                                  version=self.sf_version))
-        self.apex_url = ('https://{instance}/services/apexrest/'
+        print("base_url: ", self.base_url)
+        self.apex_url = ('http://{instance}/services/apexrest/'
                          .format(instance=self.sf_instance))
-        self.bulk_url = ('https://{instance}/services/async/{version}/'
+        self.bulk_url = ('http://{instance}/services/async/{version}/'
                          .format(instance=self.sf_instance,
                                  version=self.sf_version))
 
@@ -283,12 +286,17 @@ class Salesforce:
         * method: HTTP request method, default GET
         * other arguments supported by requests.request (e.g. json, timeout)
         """
-
+        print("ss.api.restful")
+        print("path: ", path)
+        print("params: ", params)
+        print(method)
         url = self.base_url + path
+        print("url: ", url)
         result = self._call_salesforce(method, url, name=path, params=params,
                                        **kwargs)
-
+        print("result: ", result)
         json_result = result.json(object_pairs_hook=OrderedDict)
+        print("JSON_RESULT: ", json_result)
         if len(json_result) == 0:
             return None
 
@@ -542,9 +550,16 @@ class Salesforce:
 
         Returns a process id and state for this deployment.
         """
+        print("ℹ️ ss.api.deploy")
+        print("getting instance")
         sfdc_instance = re.sub(r'\.salesforce\.com$', '', self.sf_instance)
+        print(sfdc_instance)
+        print("getting session")
         sfdc_session = SfdcSession(instance=sfdc_instance, session_id=self.session_id)
+        print(sfdc_session)
+        print("getting SfdcMetaDataApi using session")
         mdapi = SfdcMetadataApi(sfdc_session)
+        print("deploying")
         asyncId, state = mdapi.deploy(zipfile, options)
         return asyncId, state
 
